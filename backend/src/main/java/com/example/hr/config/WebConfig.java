@@ -13,6 +13,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOriginPatterns(
                         "http://localhost:*",
                         "http://127.0.0.1:*",
+                        "https://ismeranket.web.app",
                         "https://*.firebaseapp.com",
                         "https://*.web.app",
                         "https://*.amazonaws.com")
