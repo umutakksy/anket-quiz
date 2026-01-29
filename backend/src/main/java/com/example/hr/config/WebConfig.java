@@ -15,8 +15,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "http://127.0.0.1:*",
                         "https://ismeranket.web.app",
                         "https://*.firebaseapp.com",
-                        "https://*.web.app",
-                        "https://*.amazonaws.com")
+                        "https://*.web.app")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD")
                 .allowedHeaders("*")
                 .allowCredentials(true)
