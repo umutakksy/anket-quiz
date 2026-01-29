@@ -1,0 +1,53 @@
+type User @table {
+  username: String!
+  email: String!
+  createdAt: Timestamp!
+  displayName: String
+  profilePictureUrl: String
+}
+
+type QuizSurvey @table {
+  title: String!
+  type: String!
+  isPublic: Boolean!
+  createdAt: Timestamp!
+  description: String
+  passScore: Int
+  updatedAt: Timestamp
+  creator: User
+}
+
+type Question @table {
+  text: String!
+  type: String!
+  order: Int!
+  createdAt: Timestamp!
+  imageUrl: String
+  updatedAt: Timestamp
+  quizSurvey: QuizSurvey
+}
+
+type Option @table {
+  text: String!
+  isCorrect: Boolean!
+  createdAt: Timestamp!
+  updatedAt: Timestamp
+  question: Question
+}
+
+type Attempt @table {
+  startedAt: Timestamp!
+  completedAt: Timestamp!
+  score: Int
+  isPassed: Boolean
+  user: User
+  quizSurvey: QuizSurvey
+}
+
+type Response @table {
+  answerText: String
+  createdAt: Timestamp!
+  selectedOptionId: UUID
+  attempt: Attempt
+  question: Question
+}

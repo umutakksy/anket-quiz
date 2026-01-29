@@ -1,0 +1,40 @@
+mutation CreateQuizSurvey($title: String!, $type: String!, $isPublic: Boolean!, $creatorId: UUID!, $createdAt: Timestamp!) @auth(level: USER) {
+  quizSurvey_insert(data: {
+    title: $title,
+    type: $type,
+    isPublic: $isPublic,
+    creatorId: $creatorId,
+    createdAt: $createdAt
+  })
+}
+
+query ListPublicQuizSurveys @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  quizSurveys(where: {isPublic: {eq: true}}) {
+    id
+    title
+    description
+  }
+}
+
+mutation TakeQuizSurvey($quizSurveyId: UUID!, $userId: UUID!, $startedAt: Timestamp!, $completedAt: Timestamp!, $isPassed: Boolean!, $score: Int!) @auth(level: USER) {
+  attempt_insert(data: {
+    quizSurveyId: $quizSurveyId,
+    userId: $userId,
+    startedAt: $startedAt,
+    completedAt: $completedAt,
+    isPassed: $isPassed,
+    score: $score
+  })
+}
+
+query GetMyAttempts($userId: UUID!) @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  attempts(where: {userId: {eq: $userId}}) {
+    id
+    quizSurvey {
+      title
+    }
+    completedAt
+    isPassed
+    score
+  }
+}

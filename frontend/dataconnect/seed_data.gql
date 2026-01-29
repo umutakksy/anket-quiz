@@ -1,0 +1,72 @@
+mutation CreateSeedData @transaction @auth(level: PUBLIC, insecureReason: "This operation is for seeding example data, so it's safe to expose to the public") {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      username: "demouser1",
+      email: "demouser1@example.com",
+      createdAt: "2024-01-01T00:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      username: "demouser2",
+      email: "demouser2@example.com",
+      createdAt: "2024-01-01T00:00:00Z"
+    }
+  ])
+  quizSurvey_insertMany(data: [
+    {
+      id: "660e8400-e29b-41d4-a716-446655440002",
+      creatorId: "550e8400-e29b-41d4-a716-446655440000",
+      title: "Example Quiz",
+      description: "An example quiz for demo purposes",
+      type: "Quiz",
+      createdAt: "2024-01-02T00:00:00Z",
+      isPublic: true,
+      passScore: 70
+    },
+    {
+      id: "660e8400-e29b-41d4-a716-446655440003",
+      creatorId: "550e8400-e29b-41d4-a716-446655440001",
+      title: "Example Survey",
+      description: "An example survey for demo purposes",
+      type: "Survey",
+      createdAt: "2024-01-02T00:00:00Z",
+      isPublic: false,
+      passScore: 0
+    }
+  ])
+  question_insertMany(data: [
+    {
+      id: "770e8400-e29b-41d4-a716-446655440004",
+      quizSurveyId: "660e8400-e29b-41d4-a716-446655440002",
+      text: "What is the capital of France?",
+      type: "Multiple Choice",
+      order: 1,
+      createdAt: "2024-01-03T00:00:00Z"
+    },
+    {
+      id: "770e8400-e29b-41d4-a716-446655440005",
+      quizSurveyId: "660e8400-e29b-41d4-a716-446655440003",
+      text: "How satisfied are you with our service?",
+      type: "Rating",
+      order: 1,
+      createdAt: "2024-01-03T00:00:00Z"
+    }
+  ])
+  option_insertMany(data: [
+    {
+      id: "880e8400-e29b-41d4-a716-446655440006",
+      questionId: "770e8400-e29b-41d4-a716-446655440004",
+      text: "Paris",
+      isCorrect: true,
+      createdAt: "2024-01-04T00:00:00Z"
+    },
+    {
+      id: "880e8400-e29b-41d4-a716-446655440007",
+      questionId: "770e8400-e29b-41d4-a716-446655440004",
+      text: "London",
+      isCorrect: false,
+      createdAt: "2024-01-04T00:00:00Z"
+    }
+  ])
+}
