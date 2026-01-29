@@ -7,9 +7,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card } from '../components/Card';
-import { Input } from '../components/FormElements';
-import { QuizForm, validateQuizAnswers } from '../components/quiz';
+import { Card } from '../components/Card.js';
+import { Input } from '../components/FormElements.js';
+import { QuizForm, validateQuizAnswers } from '../components/quiz/index.js';
 import {
     ArrowLeft,
     Save,
@@ -28,11 +28,11 @@ import {
     ExternalLink,
     BarChart3
 } from 'lucide-react';
-import { quizService } from '../services/quizService';
+import { quizService } from '../services/quizService.js';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
-import type { Quiz, QuizQuestion, QuestionType } from '../types/quiz';
-import { QuestionEditor } from '../components/quiz';
+import type { Quiz, QuizQuestion, QuestionType } from '../types/quiz.js';
+import { QuestionEditor } from '../components/quiz/index.js';
 
 // --- Question Type Icon Helper ---
 
@@ -61,7 +61,7 @@ interface QuestionCardProps {
     index: number;
     onEdit: () => void;
     onDelete: () => void;
-    dragHandleProps?: any;
+    dragHandleProps?: any; // Inherited from dnd
 }
 
 const QuestionCard: React.FC<QuestionCardProps> = ({
@@ -110,7 +110,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     {/* Options Preview */}
                     {question.options && question.options.length > 0 && (
                         <div className="mt-3 flex flex-wrap gap-2">
-                            {question.options.slice(0, 3).map((opt, i) => (
+                            {question.options.slice(0, 3).map((opt: string, i: number) => (
                                 <span key={i} className="px-3 py-1 bg-slate-50 text-slate-600 rounded-lg text-sm border border-slate-100">
                                     {opt}
                                 </span>
@@ -183,7 +183,7 @@ const QuizDesigner: React.FC = () => {
         finally { setIsLoading(false); }
     };
 
-    const handleUpdateQuizLocally = (updates: Partial<Quiz>) => setQuiz(prev => prev ? { ...prev, ...updates } : null);
+    const handleUpdateQuizLocally = (updates: Partial<Quiz>) => setQuiz((prev: Quiz | null) => prev ? { ...prev, ...updates } : null);
 
     const handleSaveDetails = async () => {
         if (!quiz || !title.trim()) return;
@@ -204,21 +204,21 @@ const QuizDesigner: React.FC = () => {
         finally { setIsSaving(false); }
     };
 
-    const handleAddQuestion = async (data: any) => {
+    const handleAddQuestion = async (data: Omit<QuizQuestion, 'id' | 'order'>) => {
         if (!quiz) return;
         try {
             const newQuestion = await quizService.addQuestion(quiz.id, { ...data, order: quiz.questions.length + 1 });
-            setQuiz(prev => prev ? { ...prev, questions: [...prev.questions, newQuestion] } : null);
+            setQuiz((prev: Quiz | null) => prev ? { ...prev, questions: [...prev.questions, newQuestion] } : null);
             setIsAddingQuestion(false);
             showSaveMessage('success', 'Soru eklendi.');
         } catch (error) { showSaveMessage('error', 'Soru eklenemedi.'); }
     };
 
-    const handleUpdateQuestion = async (data: any) => {
+    const handleUpdateQuestion = async (data: Omit<QuizQuestion, 'id' | 'order'>) => {
         if (!quiz || !editingQuestion) return;
         try {
             const updated = await quizService.updateQuestion(quiz.id, editingQuestion.id, data);
-            setQuiz(prev => prev ? { ...prev, questions: prev.questions.map(q => q.id === editingQuestion.id ? updated : q) } : null);
+            setQuiz((prev: Quiz | null) => prev ? { ...prev, questions: prev.questions.map((q: QuizQuestion) => q.id === editingQuestion.id ? updated : q) } : null);
             setEditingQuestion(null);
             showSaveMessage('success', 'Soru guncellendi.');
         } catch (error) { showSaveMessage('error', 'Soru guncellenemedi.'); }
@@ -228,7 +228,7 @@ const QuizDesigner: React.FC = () => {
         if (!quiz || !confirm('Bu soruyu silmek istediginizden emin misiniz?')) return;
         try {
             await quizService.deleteQuestion(quiz.id, questionId);
-            setQuiz(prev => prev ? { ...prev, questions: prev.questions.filter(q => q.id !== questionId) } : null);
+            setQuiz((prev: Quiz | null) => prev ? { ...prev, questions: prev.questions.filter((q: QuizQuestion) => q.id !== questionId) } : null);
             showSaveMessage('success', 'Soru silindi.');
         } catch (error) { showSaveMessage('error', 'Soru silinemedi.'); }
     };
@@ -260,11 +260,12 @@ const QuizDesigner: React.FC = () => {
         if (!result.destination || !quiz) return;
         const items = Array.from(quiz.questions);
         const [reorderedItem] = items.splice(result.source.index, 1);
+        if (!reorderedItem) return;
         items.splice(result.destination.index, 0, reorderedItem);
-        const updatedQuestions = items.map((q, idx) => ({ ...q, order: idx + 1 }));
+        const updatedQuestions = items.map((q: QuizQuestion, idx: number) => ({ ...q, order: idx + 1 }));
         setQuiz({ ...quiz, questions: updatedQuestions });
         try {
-            await quizService.reorderQuestions(quiz.id, updatedQuestions.map(q => q.id));
+            await quizService.reorderQuestions(quiz.id, updatedQuestions.map((q: QuizQuestion) => q.id));
             showSaveMessage('success', 'Siralamama kaydedildi.');
         } catch (error) { showSaveMessage('error', 'Siralama kaydedilemedi.'); fetchQuiz(quiz.id); }
     };
@@ -312,7 +313,7 @@ const QuizDesigner: React.FC = () => {
                         )}
 
                         {quiz.status === 'PUBLISHED' && quiz.slug && (
-                            <a href={`/quiz/${quiz.slug}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all"><ExternalLink size={18} /> Quizi Gör</a>
+                            <a href={`/quiz/${quiz.slug}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all"><ExternalLink size={18} /> {quiz.type === 'QUIZ' ? 'Quizi' : 'Anketi'} Gör</a>
                         )}
                     </div>
                 </div>
@@ -324,22 +325,24 @@ const QuizDesigner: React.FC = () => {
                         {showSettings && isEditable && (
                             <Card className="animate-fadeIn border-indigo-100">
                                 <div className="p-8 space-y-6">
-                                    <h3 className="text-xl font-bold text-slate-900 border-l-4 border-indigo-600 pl-4">Quiz Ayarları</h3>
-                                    <Input label="Quiz Başlığı" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                                    <h3 className="text-xl font-bold text-slate-900 border-l-4 border-indigo-600 pl-4">{quiz.type === 'QUIZ' ? 'Quiz' : 'Anket'} Ayarları</h3>
+                                    <Input label={`${quiz.type === 'QUIZ' ? 'Quiz' : 'Anket'} Başlığı`} value={title} onChange={(e) => setTitle(e.target.value)} required />
                                     <Input label="Özel Link (Slug)" value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} placeholder="örn: genel-kultur" helperText="Boş bırakılırsa otomatik üretilir." />
                                     <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-200 cursor-pointer hover:bg-indigo-50/50 transition-colors">
                                         <input type="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} className="w-5 h-5 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500" />
-                                        <span className="text-sm font-bold text-slate-700">Anonim Quiz (İsim sormadan)</span>
+                                        <span className="text-sm font-bold text-slate-700">Anonim {quiz.type === 'QUIZ' ? 'Quiz' : 'Anket'} (İsim sormadan)</span>
                                     </label>
-                                    <Input label="Süre Sınırı (Dakika)" type="number" value={timeLimit} onChange={(e) => setTimeLimit(parseInt(e.target.value) || 0)} helperText="0 ise sınırsızdır." />
+                                    {quiz.type === 'QUIZ' && (
+                                        <Input label="Süre Sınırı (Dakika)" type="number" value={timeLimit} onChange={(e) => setTimeLimit(parseInt(e.target.value) || 0)} helperText="0 ise sınırsızdır." />
+                                    )}
 
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Hedef Departmanlar</label>
                                         <div className="flex flex-wrap gap-2">
-                                            {['Yazılım', 'HR', 'Finans', 'Pazarlama', 'Satış', 'Operasyon'].map(dept => (
+                                            {['Yazılım', 'HR', 'Finans', 'Pazarlama', 'Satış', 'Operasyon'].map((dept: string) => (
                                                 <button key={dept} type="button" onClick={() => {
                                                     const current = quiz.targetDepartments || [];
-                                                    const updated = current.includes(dept) ? current.filter(d => d !== dept) : [...current, dept];
+                                                    const updated = current.includes(dept) ? current.filter((d: string) => d !== dept) : [...current, dept];
                                                     handleUpdateQuizLocally({ targetDepartments: updated });
                                                 }} className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${(quiz.targetDepartments || []).includes(dept) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}>{dept}</button>
                                             ))}
@@ -368,7 +371,7 @@ const QuizDesigner: React.FC = () => {
                                         <Droppable droppableId="questions" isDropDisabled={!isEditable}>
                                             {(provided) => (
                                                 <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
-                                                    {quiz.questions.slice().sort((a: any, b: any) => a.order - b.order).map((question, index) => (
+                                                    {quiz.questions.slice().sort((a: QuizQuestion, b: QuizQuestion) => (a.order || 0) - (b.order || 0)).map((question: QuizQuestion, index: number) => (
                                                         <Draggable key={question.id} draggableId={question.id} index={index} isDragDisabled={!isEditable}>
                                                             {(provided) => (
                                                                 <div ref={provided.innerRef} {...provided.draggableProps}>
@@ -389,23 +392,31 @@ const QuizDesigner: React.FC = () => {
                             )}
 
                             {(isAddingQuestion || editingQuestion) && isEditable && (
-                                <QuestionEditor question={editingQuestion || undefined} isNew={isAddingQuestion} onSave={editingQuestion ? handleUpdateQuestion : handleAddQuestion} onCancel={() => { setIsAddingQuestion(false); setEditingQuestion(null); }} />
+                                <QuestionEditor
+                                    question={editingQuestion || undefined}
+                                    isNew={isAddingQuestion}
+                                    quizType={quiz.type}
+                                    onSave={editingQuestion ? handleUpdateQuestion : handleAddQuestion}
+                                    onCancel={() => { setIsAddingQuestion(false); setEditingQuestion(null); }}
+                                />
                             )}
                         </div>
                     </div>
 
                     <div className="space-y-6">
                         <Card className="p-6">
-                            <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2"><BarChart3 size={18} className="text-indigo-600" /> Quiz Bilgileri</h3>
+                            <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2"><BarChart3 size={18} className="text-indigo-600" /> {quiz.type === 'QUIZ' ? 'Quiz' : 'Anket'} Bilgileri</h3>
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center py-2 border-b border-slate-50">
                                     <span className="text-sm text-slate-500">Soru Sayısı</span>
                                     <span className="text-sm font-bold text-slate-900">{quiz.questions.length}</span>
                                 </div>
-                                <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                                    <span className="text-sm text-slate-500">Süre Sınırı</span>
-                                    <span className="text-sm font-bold text-slate-900">{(quiz.timeLimit || 0) > 0 ? `${quiz.timeLimit} Dakika` : 'Sınırsız'}</span>
-                                </div>
+                                {quiz.type === 'QUIZ' && (
+                                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                                        <span className="text-sm text-slate-500">Süre Sınırı</span>
+                                        <span className="text-sm font-bold text-slate-900">{(quiz.timeLimit || 0) > 0 ? `${quiz.timeLimit} Dakika` : 'Sınırsız'}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between items-center py-2">
                                     <span className="text-sm text-slate-500">Oluşturulma</span>
                                     <span className="text-sm font-bold text-slate-900">{new Date(quiz.createdAt).toLocaleDateString('tr-TR')}</span>

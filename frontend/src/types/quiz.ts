@@ -69,6 +69,8 @@ export interface Quiz {
     targetDepartments?: string[];
     /** Time limit in minutes */
     timeLimit?: number;
+    /** Type of the entity: QUIZ or SURVEY */
+    type: 'QUIZ' | 'SURVEY';
     /** All questions in this quiz */
     questions: QuizQuestion[];
 }
@@ -122,6 +124,7 @@ export interface CreateQuizRequest {
     creatorDepartment?: string;
     targetDepartments?: string[];
     timeLimit?: number;
+    type: 'QUIZ' | 'SURVEY';
 }
 
 /**
@@ -235,5 +238,6 @@ export interface PublicQuiz {
     status: QuizStatus;
     questions: QuizQuestion[];
     timeLimit?: number;
+    type: 'QUIZ' | 'SURVEY';
 }
 

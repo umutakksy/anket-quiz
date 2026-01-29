@@ -1,6 +1,6 @@
 import React from 'react';
-import type { QuizQuestion } from '../../types/quiz';
-import { Label } from '../FormElements';
+import type { QuizQuestion } from '../../types/quiz.js';
+import { Label } from '../FormElements.js';
 import { Triangle, Square, Circle, Diamond } from 'lucide-react';
 
 // --- Types ---
@@ -9,8 +9,9 @@ interface QuestionRendererProps {
     question: QuizQuestion;
     value: string | string[];
     onChange: (value: string | string[]) => void;
-    error?: string;
-    disabled?: boolean;
+    quizType?: 'QUIZ' | 'SURVEY';
+    error?: string | undefined;
+    disabled?: boolean | undefined;
 }
 
 // --- Constants ---
@@ -28,6 +29,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     question,
     value,
     onChange,
+    quizType = 'QUIZ',
     error,
     disabled = false
 }) => {
@@ -45,7 +47,9 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     const handleMultipleChoiceChange = (option: string, checked: boolean) => {
         const currentValue = Array.isArray(value) ? value : [];
         if (checked) {
-            onChange([...currentValue, option]);
+            if (!currentValue.includes(option)) {
+                onChange([...currentValue, option]);
+            }
         } else {
             onChange(currentValue.filter(v => v !== option));
         }
@@ -73,10 +77,46 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                 );
 
             case 'SINGLE_CHOICE':
+                if (quizType === 'SURVEY') {
+                    return (
+                        <div className="flex flex-col gap-1.5">
+                            {question.options?.map((option, index) => {
+                                const isSelected = value === option;
+                                return (
+                                    <div
+                                        key={index}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            if (!disabled) handleSingleChoiceChange(option);
+                                        }}
+                                        className={`
+                                            flex items-center gap-3 p-2.5 rounded-lg border transition-all duration-150 text-left cursor-pointer
+                                            ${isSelected
+                                                ? 'border-indigo-500 bg-indigo-50/50 shadow-sm'
+                                                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'}
+                                            ${disabled ? 'opacity-50 grayscale cursor-not-allowed' : ''}
+                                        `}
+                                    >
+                                        <div className={`
+                                            w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 transition-colors
+                                            ${isSelected ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300'}
+                                        `}>
+                                            <div className={`w-1.5 h-1.5 bg-white rounded-full transition-transform ${isSelected ? 'scale-100' : 'scale-0'}`} />
+                                        </div>
+                                        <span className={`text-sm font-semibold transition-colors ${isSelected ? 'text-indigo-900' : 'text-slate-600'}`}>
+                                            {option}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    );
+                }
                 return (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {question.options?.map((option, index) => {
-                            const config = KAHOOT_COLORS[index % KAHOOT_COLORS.length];
+                            const config = KAHOOT_COLORS[index % KAHOOT_COLORS.length]!;
                             const isSelected = value === option;
                             const Icon = config.icon;
 
@@ -84,7 +124,11 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                                 <button
                                     key={index}
                                     type="button"
-                                    onClick={() => !disabled && handleSingleChoiceChange(option)}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (!disabled) handleSingleChoiceChange(option);
+                                    }}
                                     disabled={disabled}
                                     className={`
                                         flex items-center gap-4 p-6 rounded-2xl transition-all duration-200 text-left relative overflow-hidden group
@@ -114,10 +158,46 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
             case 'MULTIPLE_CHOICE':
                 const selectedValues = Array.isArray(value) ? value : [];
+                if (quizType === 'SURVEY') {
+                    return (
+                        <div className="flex flex-col gap-1.5">
+                            {question.options?.map((option, index) => {
+                                const isChecked = selectedValues.includes(option);
+                                return (
+                                    <div
+                                        key={index}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            if (!disabled) handleMultipleChoiceChange(option, !isChecked);
+                                        }}
+                                        className={`
+                                            flex items-center gap-3 p-2.5 rounded-lg border transition-all duration-150 text-left cursor-pointer
+                                            ${isChecked
+                                                ? 'border-indigo-500 bg-indigo-50/50 shadow-sm'
+                                                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'}
+                                            ${disabled ? 'opacity-50 grayscale cursor-not-allowed' : ''}
+                                        `}
+                                    >
+                                        <div className={`
+                                            w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors
+                                            ${isChecked ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300'}
+                                        `}>
+                                            {isChecked && <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" /></svg>}
+                                        </div>
+                                        <span className={`text-sm font-semibold transition-colors ${isChecked ? 'text-indigo-900' : 'text-slate-600'}`}>
+                                            {option}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    );
+                }
                 return (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {question.options?.map((option, index) => {
-                            const config = KAHOOT_COLORS[index % KAHOOT_COLORS.length];
+                            const config = KAHOOT_COLORS[index % KAHOOT_COLORS.length]!;
                             const isChecked = selectedValues.includes(option);
                             const Icon = config.icon;
 
@@ -125,7 +205,11 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                                 <button
                                     key={index}
                                     type="button"
-                                    onClick={() => !disabled && handleMultipleChoiceChange(option, !isChecked)}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (!disabled) handleMultipleChoiceChange(option, !isChecked);
+                                    }}
                                     disabled={disabled}
                                     className={`
                                         flex items-center gap-4 p-6 rounded-2xl transition-all duration-200 text-left relative overflow-hidden group
@@ -161,13 +245,13 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     };
 
     return (
-        <div className="space-y-6">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-800 leading-tight">
+        <div className="space-y-4">
+            <h2 className={`font-black text-slate-800 leading-tight ${quizType === 'SURVEY' ? 'text-xl' : 'text-2xl sm:text-3xl'}`}>
                 {question.text}
                 {question.required && <span className="text-rose-500 ml-2">*</span>}
             </h2>
 
-            <div className="pt-4">
+            <div className={quizType === 'SURVEY' ? 'pt-1' : 'pt-4'}>
                 {renderInput()}
             </div>
 
@@ -188,7 +272,8 @@ interface QuizFormProps {
     answers: Record<string, string | string[]>;
     errors: Record<string, string>;
     onChange: (questionId: string, value: string | string[]) => void;
-    disabled?: boolean;
+    quizType?: 'QUIZ' | 'SURVEY';
+    disabled?: boolean | undefined;
 }
 
 export const QuizForm: React.FC<QuizFormProps> = ({
@@ -196,6 +281,7 @@ export const QuizForm: React.FC<QuizFormProps> = ({
     answers,
     errors,
     onChange,
+    quizType = 'QUIZ',
     disabled = false
 }) => {
     // Sort questions by order
@@ -217,6 +303,7 @@ export const QuizForm: React.FC<QuizFormProps> = ({
                                 question={question}
                                 value={answers[question.id] || (question.type === 'MULTIPLE_CHOICE' ? [] : '')}
                                 onChange={(value) => onChange(question.id, value)}
+                                quizType={quizType}
                                 error={errors[question.id]}
                                 disabled={disabled}
                             />

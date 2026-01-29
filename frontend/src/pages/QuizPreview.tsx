@@ -7,15 +7,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card } from '../components/Card';
-import { QuizForm } from '../components/quiz';
+import { Card } from '../components/Card.js';
+import { QuizForm } from '../components/quiz/index.js';
 import {
     ClipboardList,
     AlertCircle,
     Eye
 } from 'lucide-react';
-import { quizService } from '../services/quizService';
-import type { Quiz } from '../types/quiz';
+import { quizService } from '../services/quizService.js';
+import type { Quiz } from '../types/quiz.js';
 
 const QuizPreview: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -151,7 +151,8 @@ const QuizPreview: React.FC = () => {
                     questions={quiz.questions}
                     answers={answers}
                     errors={{}}
-                    onChange={(id, val) => setAnswers(prev => ({ ...prev, [id]: val }))}
+                    onChange={(id: string, val: string | string[]) => setAnswers(prev => ({ ...prev, [id]: val }))}
+                    quizType={quiz.type}
                 />
 
                 {/* Preview Action */}

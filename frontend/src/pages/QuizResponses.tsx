@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card } from '../components/Card';
+import { Card } from '../components/Card.js';
 import {
     ArrowLeft,
     BarChart3,
@@ -22,8 +22,8 @@ import {
     CheckSquare,
     Clock
 } from 'lucide-react';
-import { quizService } from '../services/quizService';
-import type { Quiz, QuizResponse, QuizStatsResponse, QuestionType } from '../types/quiz';
+import { quizService } from '../services/quizService.js';
+import type { Quiz, QuizResponse, QuizStatsResponse, QuestionType } from '../types/quiz.js';
 
 // --- Question Type Icon ---
 
@@ -101,15 +101,33 @@ const ResponseCard: React.FC<ResponseCardProps> = ({
                         </p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
-                    <span className="text-sm text-slate-500">
-                        {response.answers.length} yanit
-                    </span>
-                    {isExpanded ? (
-                        <ChevronUp size={20} className="text-slate-400" />
-                    ) : (
-                        <ChevronDown size={20} className="text-slate-400" />
-                    )}
+                <div className="flex items-center gap-6">
+                    <div className="hidden sm:flex items-center gap-4">
+                        {quiz.type === 'QUIZ' && response.score !== undefined && (
+                            <div className="text-right">
+                                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Puan</p>
+                                <p className="text-sm font-bold text-indigo-600">%{response.score.toFixed(0)}</p>
+                            </div>
+                        )}
+                        {response.completingTime !== undefined && (
+                            <div className="text-right">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Süre</p>
+                                <p className="text-sm font-bold text-slate-600">
+                                    {Math.floor(response.completingTime / 60)}:{(response.completingTime % 60).toString().padStart(2, '0')}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <span className="text-sm text-slate-500 font-medium bg-slate-100 px-2 py-1 rounded-lg">
+                            {response.answers.length} yanit
+                        </span>
+                        {isExpanded ? (
+                            <ChevronUp size={20} className="text-slate-400" />
+                        ) : (
+                            <ChevronDown size={20} className="text-slate-400" />
+                        )}
+                    </div>
                 </div>
             </button>
 
@@ -248,6 +266,10 @@ const QuizResponses: React.FC = () => {
         }
     };
 
+    const averageScore = responses.length > 0 && quiz?.type === 'QUIZ'
+        ? responses.reduce((acc, curr) => acc + (curr.score || 0), 0) / responses.length
+        : null;
+
     // Export responses as CSV
     const handleExport = () => {
         if (!quiz || responses.length === 0) return;
@@ -298,12 +320,12 @@ const QuizResponses: React.FC = () => {
     if (!quiz) {
         return (
             <div className="flex flex-col items-center justify-center h-screen">
-                <p className="text-slate-500">Quiz bulunamadi</p>
+                <p className="text-slate-500">Içerik bulunamadı</p>
                 <button
                     onClick={() => navigate('/')}
                     className="mt-4 text-indigo-600 hover:text-indigo-800 font-semibold"
                 >
-                    Quizlere Don
+                    Ana Sayfaya Dön
                 </button>
             </div>
         );
@@ -321,7 +343,7 @@ const QuizResponses: React.FC = () => {
                 </button>
                 <div className="flex-1">
                     <h1 className="text-xl font-bold text-slate-900">{quiz.title}</h1>
-                    <p className="text-sm text-slate-500">Quiz Yanıtları</p>
+                    <p className="text-sm text-slate-500">{quiz.type === 'QUIZ' ? 'Quiz Yanıtları' : 'Anket Yanıtları'}</p>
                 </div>
                 <button
                     onClick={handleExport}
@@ -334,13 +356,21 @@ const QuizResponses: React.FC = () => {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className={`grid grid-cols-1 ${quiz.type === 'QUIZ' ? 'sm:grid-cols-4' : 'sm:grid-cols-3'} gap-4`}>
                 <StatCard
                     label="Toplam Yanit"
                     value={responses.length}
                     icon={Users}
                     color="bg-indigo-100 text-indigo-600"
                 />
+                {quiz.type === 'QUIZ' && averageScore !== null && (
+                    <StatCard
+                        label="Ortalama Puan"
+                        value={`%${averageScore.toFixed(0)}`}
+                        icon={BarChart3}
+                        color="bg-amber-100 text-amber-600"
+                    />
+                )}
                 <StatCard
                     label="Soru Sayisi"
                     value={quiz.questions.length}
@@ -349,7 +379,7 @@ const QuizResponses: React.FC = () => {
                 />
                 <StatCard
                     label="Son Yanit"
-                    value={responses.length > 0
+                    value={responses.length > 0 && responses[0]
                         ? new Date(responses[0].submittedAt).toLocaleDateString('tr-TR')
                         : '-'}
                     icon={Calendar}
@@ -393,7 +423,7 @@ const QuizResponses: React.FC = () => {
                                 Henuz yanit yok
                             </h3>
                             <p className="text-sm text-slate-500">
-                                Quiziniz yayınlandıktan sonra yanıtlar burada görünecektir.
+                                {quiz.type === 'QUIZ' ? 'Quiziniz' : 'Anketiniz'} yayınlandıktan sonra yanıtlar burada görünecektir.
                             </p>
                         </Card>
                     ) : (

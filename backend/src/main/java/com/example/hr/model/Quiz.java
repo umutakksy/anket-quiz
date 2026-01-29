@@ -33,6 +33,7 @@ public class Quiz {
     @org.springframework.data.mongodb.core.mapping.Field("timeLimit")
     @com.fasterxml.jackson.annotation.JsonProperty("timeLimit")
     private Integer timeLimit; // Time limit in minutes (null means no limit)
+    private String type; // QUIZ, SURVEY
     @Builder.Default
     private List<QuizQuestion> questions = new ArrayList<>();
 
@@ -138,6 +139,14 @@ public class Quiz {
 
     public void setTimeLimit(Integer timeLimit) {
         this.timeLimit = timeLimit;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public List<QuizQuestion> getQuestions() {

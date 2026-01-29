@@ -6,8 +6,8 @@
 // ============================================================================
 
 import React, { useState } from 'react';
-import type { QuizQuestion, QuestionType, QuestionFormState } from '../../types/quiz';
-import { TextArea } from '../FormElements';
+import type { QuizQuestion, QuestionType, QuestionFormState } from '../../types/quiz.js';
+import { TextArea } from '../FormElements.js';
 import {
     Type,
     List,
@@ -27,6 +27,7 @@ interface QuestionEditorProps {
     onSave: (data: Omit<QuizQuestion, 'id' | 'order'>) => void;
     onCancel: () => void;
     isNew?: boolean;
+    quizType?: 'QUIZ' | 'SURVEY';
 }
 
 // --- Constants ---
@@ -43,7 +44,8 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
     question,
     onSave,
     onCancel,
-    isNew = false
+    isNew = false,
+    quizType = 'QUIZ'
 }) => {
     const [formState, setFormState] = useState<QuestionFormState>({
         text: question?.text || '',
@@ -61,7 +63,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
 
     // Add a new option
     const addOption = () => {
-        setFormState(prev => ({
+        setFormState((prev: QuestionFormState) => ({
             ...prev,
             options: [...prev.options, '']
         }));
@@ -70,18 +72,18 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
     // Remove an option
     const removeOption = (index: number) => {
         if (formState.options.length > 1) {
-            setFormState(prev => ({
+            setFormState((prev: QuestionFormState) => ({
                 ...prev,
-                options: prev.options.filter((_, i) => i !== index)
+                options: prev.options.filter((_: string, i: number) => i !== index)
             }));
         }
     };
 
     // Update an option
     const updateOption = (index: number, value: string) => {
-        setFormState(prev => ({
+        setFormState((prev: QuestionFormState) => ({
             ...prev,
-            options: prev.options.map((opt, i) => i === index ? value : opt)
+            options: prev.options.map((opt: string, i: number) => i === index ? value : opt)
         }));
     };
 
@@ -94,7 +96,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
         }
 
         if (needsOptions) {
-            const validOptions = formState.options.filter(opt => opt.trim());
+            const validOptions = formState.options.filter((opt: string) => opt.trim());
             if (validOptions.length < 2) {
                 newErrors.options = 'En az 2 secenek gereklidir.';
             }
@@ -112,7 +114,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                 type: formState.type,
                 required: formState.required,
                 ...(needsOptions ? {
-                    options: formState.options.filter(opt => opt.trim()),
+                    options: Array.from(new Set(formState.options.filter((opt: string) => opt.trim()))),
                     correctOption: formState.correctOption,
                     correctOptions: formState.correctOptions
                 } : {})
@@ -144,7 +146,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                         label="Soru Metni"
                         placeholder="Sorunuzu buraya yazin..."
                         value={formState.text}
-                        onChange={(e) => setFormState(prev => ({ ...prev, text: e.target.value }))}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormState((prev: QuestionFormState) => ({ ...prev, text: e.target.value }))}
                         error={errors.text}
                         required
                     />
@@ -174,7 +176,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                                         name="questionType"
                                         value={value}
                                         checked={formState.type === value}
-                                        onChange={() => setFormState(prev => ({ ...prev, type: value }))}
+                                        onChange={() => setFormState((prev: QuestionFormState) => ({ ...prev, type: value }))}
                                         className="sr-only"
                                     />
                                     <Icon
@@ -211,7 +213,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                                     type="radio"
                                     name="required"
                                     checked={formState.required}
-                                    onChange={() => setFormState(prev => ({ ...prev, required: true }))}
+                                    onChange={() => setFormState((prev: QuestionFormState) => ({ ...prev, required: true }))}
                                     className="sr-only"
                                 />
                                 <div className={`
@@ -238,7 +240,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                                     type="radio"
                                     name="required"
                                     checked={!formState.required}
-                                    onChange={() => setFormState(prev => ({ ...prev, required: false }))}
+                                    onChange={() => setFormState((prev: QuestionFormState) => ({ ...prev, required: false }))}
                                     className="sr-only"
                                 />
                                 <div className={`
@@ -273,74 +275,81 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                             </button>
                         </div>
 
-                        <div className="space-y-3">
-                            {formState.options.map((option, index) => (
-                                <div
-                                    key={index}
-                                    className="flex items-center gap-3 group"
-                                >
-                                    <div className="text-slate-300 cursor-grab">
-                                        <GripVertical size={18} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <input
-                                            type="text"
-                                            value={option}
-                                            onChange={(e) => updateOption(index, e.target.value)}
-                                            placeholder={`Secenek ${index + 1}`}
-                                            className="w-full bg-slate-50 border-slate-200 text-slate-900 rounded-xl border
-                                                hover:border-slate-300 focus:border-indigo-500 focus:ring-indigo-100 focus:bg-white
-                                                focus:outline-none focus:ring-4 transition-all duration-200
-                                                font-medium text-sm py-3 px-4 shadow-sm"
-                                        />
-                                    </div>
+                        <div className="space-y-2">
+                            {formState.options.map((option: string, index: number) => {
+                                const isCorrect = formState.type === 'SINGLE_CHOICE'
+                                    ? formState.correctOption === option
+                                    : (formState.correctOptions || []).includes(option);
 
-                                    {/* Correct Option Selector */}
-                                    <div className="flex items-center gap-2">
-                                        {formState.type === 'SINGLE_CHOICE' ? (
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormState(prev => ({ ...prev, correctOption: option }))}
-                                                className={`p-2 rounded-lg border transition-all ${formState.correctOption === option
-                                                    ? 'bg-emerald-100 border-emerald-300 text-emerald-600'
-                                                    : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300'
-                                                    }`}
-                                                title="Dogru Cevap Olarak Isaretle"
-                                            >
-                                                <CheckCircle2 size={16} />
-                                            </button>
-                                        ) : (
+                                return (
+                                    <div
+                                        key={index}
+                                        className={`
+                                            flex items-center gap-3 p-2 rounded-xl border transition-all duration-200 group relative
+                                            ${quizType === 'QUIZ' && isCorrect ? 'bg-emerald-50 border-emerald-200 shadow-sm' : 'bg-white border-slate-100 hover:border-slate-200'}
+                                        `}
+                                    >
+                                        <div className="text-slate-300 cursor-grab pl-1">
+                                            <GripVertical size={16} />
+                                        </div>
+
+                                        {/* Correct Option Selector (Left Side Overlay - Invisible but clickable area) */}
+                                        {quizType === 'QUIZ' && (
                                             <button
                                                 type="button"
                                                 onClick={() => {
-                                                    const current = formState.correctOptions || [];
-                                                    const updated = current.includes(option)
-                                                        ? current.filter(o => o !== option)
-                                                        : [...current, option];
-                                                    setFormState(prev => ({ ...prev, correctOptions: updated }));
+                                                    if (formState.type === 'SINGLE_CHOICE') {
+                                                        setFormState((prev: QuestionFormState) => ({ ...prev, correctOption: option }));
+                                                    } else {
+                                                        const current = formState.correctOptions || [];
+                                                        const updated = current.includes(option)
+                                                            ? current.filter((o: string) => o !== option)
+                                                            : [...current, option];
+                                                        setFormState((prev: QuestionFormState) => ({ ...prev, correctOptions: updated }));
+                                                    }
                                                 }}
-                                                className={`p-2 rounded-lg border transition-all ${(formState.correctOptions || []).includes(option)
-                                                    ? 'bg-emerald-100 border-emerald-300 text-emerald-600'
-                                                    : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300'
-                                                    }`}
-                                                title="Dogru Cevap Olarak Isaretle"
+                                                className={`
+                                                    w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-all flex-shrink-0
+                                                    ${isCorrect
+                                                        ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
+                                                        : 'bg-white border-slate-200 text-slate-300 hover:border-emerald-400 group-hover:block hidden sm:flex'
+                                                    }
+                                                `}
+                                                title="Doğru Cevap Olarak İşaretle"
                                             >
                                                 <CheckCircle2 size={16} />
                                             </button>
                                         )}
-                                    </div>
 
-                                    {formState.options.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => removeOption(index)}
-                                            className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
+                                        <div className="flex-1">
+                                            <input
+                                                type="text"
+                                                value={option}
+                                                onChange={(e) => updateOption(index, e.target.value)}
+                                                placeholder={`Secenek ${index + 1}`}
+                                                className={`
+                                                    w-full bg-transparent text-slate-900 border-none
+                                                    focus:ring-0 focus:outline-none transition-all duration-200
+                                                    font-medium text-sm py-1 px-1
+                                                    ${quizType === 'QUIZ' && isCorrect ? 'placeholder:text-emerald-400' : 'placeholder:text-slate-400'}
+                                                `}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-1 pr-1">
+                                            {formState.options.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeOption(index)}
+                                                    className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
 
                         {errors.options && (

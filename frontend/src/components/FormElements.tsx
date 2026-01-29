@@ -6,22 +6,22 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     label?: string;
     icon?: LucideIcon;
     iconPosition?: 'left' | 'right';
-    error?: string;
-    helperText?: string;
+    error?: string | undefined;
+    helperText?: string | undefined;
 }
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
     label?: string;
     options: string[] | { value: string; label: string }[];
     icon?: LucideIcon;
-    error?: string;
-    helperText?: string;
+    error?: string | undefined;
+    helperText?: string | undefined;
 }
 
 interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
     label?: string;
-    error?: string;
-    helperText?: string;
+    error?: string | undefined;
+    helperText?: string | undefined;
 }
 
 // --- Components ---
@@ -54,7 +54,7 @@ export const CardHeader: React.FC<{
     </div>
 );
 
-export const Label: React.FC<{ children: React.ReactNode; htmlFor?: string; required?: boolean }> = ({ children, htmlFor, required }) => (
+export const Label: React.FC<{ children: React.ReactNode; htmlFor?: string; required?: boolean | undefined }> = ({ children, htmlFor, required }) => (
     <label htmlFor={htmlFor} className="block text-sm font-semibold text-gray-700 mb-2 ml-1">
         {children}
         {required && <span className="text-rose-500 ml-1 font-bold">*</span>}
