@@ -11,6 +11,10 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOriginPatterns(
+                        "http://13.63.57.2",
+                        "https://13.63.57.2",
+                        "http://13.63.57.2:*",
+                        "https://13.63.57.2:*",
                         "http://localhost:*",
                         "http://127.0.0.1:*",
                         "https://ismeranket.web.app",

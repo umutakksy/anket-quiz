@@ -1,32 +1,47 @@
 /**
- * Import function triggers from their respective submodules:
- *
- * import {onCall} from "firebase-functions/v2/https";
- * import {onDocumentWritten} from "firebase-functions/v2/firestore";
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
+ * Firebase Cloud Function - API Proxy
+ * Routes requests from https://ismeranket.web.app/api/* to AWS backend
  */
 
-import {setGlobalOptions} from "firebase-functions";
-import {onRequest} from "firebase-functions/https";
+import { setGlobalOptions } from "firebase-functions";
+import { onRequest } from "firebase-functions/https";
 import * as logger from "firebase-functions/logger";
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
-
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
+// Cost control
 setGlobalOptions({ maxInstances: 10 });
 
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+const AWS_BACKEND = "http://13.60.37.212";
+
+export const api = onRequest(async (req, res) => {
+    // CORS headers
+    res.set("Access-Control-Allow-Origin", "https://ismeranket.web.app");
+    res.set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type,Authorization");
+    res.set("Access-Control-Allow-Credentials", "true");
+
+    // Preflight OPTIONS
+    if (req.method === "OPTIONS") {
+        res.status(204).send("");
+        return;
+    }
+
+    try {
+        const targetUrl = `${AWS_BACKEND}${req.url}`;
+        logger.info(`Proxying request to: ${targetUrl}`);
+
+        const response = await fetch(targetUrl, {
+            method: req.method,
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: req.method !== "GET" && req.method !== "HEAD" ?
+                JSON.stringify(req.body) : undefined,
+        });
+
+        const data = await response.json();
+        res.status(response.status).json(data);
+    } catch (error) {
+        logger.error("Proxy error:", error);
+        res.status(500).json({ error: "Internal proxy error" });
+    }
+});
