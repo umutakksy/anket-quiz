@@ -5,6 +5,8 @@ import QuizDesigner from './pages/QuizDesigner';
 import QuizResponses from './pages/QuizResponses';
 import PublicQuizPage from './pages/PublicQuiz';
 import QuizPreview from './pages/QuizPreview';
+import Login from './pages/Login';
+import { authService } from './services/authService';
 import './index.css';
 
 const Layout = ({ children }: { children: React.ReactNode }) => (
@@ -23,22 +25,29 @@ const Layout = ({ children }: { children: React.ReactNode }) => (
     </div>
 );
 
+const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+    if (!authService.isAuthenticated()) {
+        return <Navigate to="/login" replace />;
+    }
+    return <>{children}</>;
+};
+
 function App() {
     return (
         <BrowserRouter>
             <Routes>
+                <Route path="/login" element={<Login />} />
                 <Route path="/quiz/:slug" element={<PublicQuizPage />} />
-                <Route path="/quiz/preview/:id" element={<QuizPreview />} />
+                <Route path="/quiz/preview/:id" element={<PrivateRoute><QuizPreview /></PrivateRoute>} />
 
-                <Route path="/" element={<Layout><QuizList /></Layout>} />
-                <Route path="/quiz/:id/duzenle" element={<Layout><QuizDesigner /></Layout>} />
-                <Route path="/quiz/:id/yanitlar" element={<Layout><QuizResponses /></Layout>} />
+                <Route path="/" element={<PrivateRoute><Layout><QuizList /></Layout></PrivateRoute>} />
+                <Route path="/quiz/:id/duzenle" element={<PrivateRoute><Layout><QuizDesigner /></Layout></PrivateRoute>} />
+                <Route path="/quiz/:id/yanitlar" element={<PrivateRoute><Layout><QuizResponses /></Layout></PrivateRoute>} />
 
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </BrowserRouter>
     );
 }
-
 
 export default App;
